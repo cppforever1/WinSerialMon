@@ -100,6 +100,21 @@ public sealed class SerialPortActionEventArgs : EventArgs
             ? SerialHandFlowSettings.TryDecode(IoctlInputBuffer)
             : null;
 
+    /// <summary>Decoded read/write timeout settings from SetTimeouts or GetTimeouts IOCTL.</summary>
+    public SerialTimeoutSettings? NewTimeouts =>
+        KnownIoctlCode switch
+        {
+            SerialIoctlCode.SetTimeouts => SerialTimeoutSettings.TryDecode(IoctlInputBuffer),
+            SerialIoctlCode.GetTimeouts => SerialTimeoutSettings.TryDecode(IoctlOutputBuffer),
+            _ => null
+        };
+
+    /// <summary>Decoded modem status register bits from GetModemStatus IOCTL.</summary>
+    public SerialModemStatus? ModemStatus =>
+        KnownIoctlCode == SerialIoctlCode.GetModemStatus
+            ? SerialModemStatus.TryDecode(IoctlOutputBuffer)
+            : null;
+
     /// <summary>Fully decoded COMMCONFIG/DCB from SetCommConfig IOCTL (baud, data bits, stop bits, parity, flow control).</summary>
     public SerialCommConfigSettings? NewCommConfig =>
         KnownIoctlCode == SerialIoctlCode.SetCommConfig
