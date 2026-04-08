@@ -50,6 +50,8 @@ WinSerialMon is a .NET 10 class library that monitors serial-port I/O in real ti
 | `SerialIoctlCode.cs` | Well-known serial IOCTL code enum for identifying configuration operations |
 | `SerialLineControlSettings.cs` | Decoded line-control model (data bits, stop bits, parity) |
 | `SerialHandFlowSettings.cs` | Decoded handshake/flow-control model |
+| `SerialTimeoutSettings.cs` | Decoded read/write timeout model |
+| `SerialModemStatus.cs` | Decoded modem-status register flags |
 | `SerialCommConfigSettings.cs` | Decoded COMMCONFIG/DCB model (all serial settings in one payload) |
 | `SerialParity.cs` | Parity enum used by decoded settings |
 | `SerialStopBits.cs` | Stop-bit enum used by decoded settings |
@@ -103,7 +105,7 @@ WinSerialMon is a .NET 10 class library that monitors serial-port I/O in real ti
 | `ProcessId` | `int` | Originating process |
 | `ThreadId` | `int` | Originating thread |
 | `IoControlCode` | `ulong?` | IOCTL code (Ioctl only) |
-| `KnownIoctlCode` | `SerialIoctlCode` | Named IOCTL value (e.g. `SetBaudRate`, `SetLineControl`, `SetHandFlow`, `SetCommConfig`) |
+| `KnownIoctlCode` | `SerialIoctlCode` | Named IOCTL value (e.g. `SetBaudRate`, `SetLineControl`, `SetTimeouts`, `GetModemStatus`, `SetHandFlow`, `SetCommConfig`) |
 | `NtStatus` | `uint?` | NT status code |
 | `RequestedLength` | `int?` | Bytes requested |
 | `CompletedLength` | `int?` | Bytes transferred |
@@ -113,6 +115,8 @@ WinSerialMon is a .NET 10 class library that monitors serial-port I/O in real ti
 | `IoctlOutputBuffer` | `byte[]?` | IOCTL output buffer (when available) |
 | `NewBaudRate` | `uint?` | Decoded baud rate from `SetBaudRate` (and from `SetCommConfig`) |
 | `NewLineControl` | `SerialLineControlSettings?` | Decoded data bits, stop bits, parity from `SetLineControl` (and from `SetCommConfig`) |
+| `NewTimeouts` | `SerialTimeoutSettings?` | Decoded read/write timeouts from `SetTimeouts` (and `GetTimeouts` output when available) |
+| `ModemStatus` | `SerialModemStatus?` | Decoded modem-status register flags from `GetModemStatus` |
 | `NewHandFlow` | `SerialHandFlowSettings?` | Decoded handshake / flow-control flags from `SetHandFlow` |
 | `NewCommConfig` | `SerialCommConfigSettings?` | Full decoded COMMCONFIG/DCB from `SetCommConfig` |
 | `IrpEvent` | `SerialIrpEvent` | Full raw IRP event record |
@@ -131,6 +135,16 @@ WinSerialMon is a .NET 10 class library that monitors serial-port I/O in real ti
             case SerialIoctlCode.SetLineControl:
                 // e.NewLineControl has DataBits / StopBits / Parity
                 Console.WriteLine($"{e.ComPortName} line -> {e.NewLineControl?.DataBits},{e.NewLineControl?.StopBits},{e.NewLineControl?.Parity}");
+                break;
+
+            case SerialIoctlCode.SetTimeouts:
+                // e.NewTimeouts has the SERIAL_TIMEOUTS fields
+                Console.WriteLine($"{e.ComPortName} timeouts -> readConst:{e.NewTimeouts?.ReadTotalTimeoutConstant} writeConst:{e.NewTimeouts?.WriteTotalTimeoutConstant}");
+                break;
+
+            case SerialIoctlCode.GetModemStatus:
+                // e.ModemStatus has decoded CTS/DSR/RI/DCD bits
+                Console.WriteLine($"{e.ComPortName} modem -> CTS:{e.ModemStatus?.IsClearToSend} DSR:{e.ModemStatus?.IsDataSetReady} DCD:{e.ModemStatus?.IsDataCarrierDetect}");
                 break;
 
             case SerialIoctlCode.SetHandFlow:
